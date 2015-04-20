@@ -2,6 +2,8 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var session = require('express-session');
+var bcrypt = require('bcrypt-nodejs');
 
 
 var db = require('./app/config');
@@ -21,26 +23,54 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
+app.use(session({secret: 'hr secrets'}));
 
 
-app.get('/', 
+
+
+app.get('/', util.restrict,
 function(req, res) {
   res.render('index');
 });
 
-app.get('/create', 
+app.get('/login',
+  function(req, res){
+    res.render('login');
+  });
+
+app.get('/create',
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links',
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links', 
+app.post('/login', function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  var salt = bcrypt.genSaltSync(10);
+  var hash = bcrypt.hashSync(password, salt);
+
+
+  //check database:
+  var userObj = db.users.findOne({username: username, password: hash});
+
+  if(userObj){
+    req.session.regenerate(function(){
+      req.session.user = userObj.username;
+      res.redirect('/');
+    });
+  } else {
+      res.redirect('/login');
+  }
+});
+
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 
