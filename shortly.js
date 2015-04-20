@@ -38,6 +38,11 @@ app.get('/login',
     res.render('login');
   });
 
+app.get('/signup',
+  function(req, res){
+    res.render('signup');
+  });
+
 app.get('/create',
 function(req, res) {
   res.render('index');
@@ -56,11 +61,11 @@ app.post('/login', function(req, res) {
   var salt = bcrypt.genSaltSync(10);
   var hash = bcrypt.hashSync(password, salt);
 
-
   //check database:
   var userObj = db.users.findOne({username: username, password: hash});
 
-  if(userObj){
+  if(false){
+    //test once have database set up
     req.session.regenerate(function(){
       req.session.user = userObj.username;
       res.redirect('/');
@@ -69,6 +74,8 @@ app.post('/login', function(req, res) {
       res.redirect('/login');
   }
 });
+
+
 
 app.post('/links',
 function(req, res) {
