@@ -28,7 +28,7 @@ app.use(session({secret: 'hr secrets'}));
 
 
 
-app.get('/', util.restrict,
+app.get('/', util.checkUser,
 function(req, res) {
   res.render('index');
 });
@@ -55,25 +55,6 @@ function(req, res) {
   });
 });
 
-app.post('/login', function(req, res) {
-  var username = req.body.username;
-  var password = req.body.password;
-  var salt = bcrypt.genSaltSync(10);
-  var hash = bcrypt.hashSync(password, salt);
-
-  //check database:
-  var userObj = db.users.findOne({username: username, password: hash});
-
-  if(false){
-    //test once have database set up
-    req.session.regenerate(function(){
-      req.session.user = userObj.username;
-      res.redirect('/');
-    });
-  } else {
-      res.redirect('/login');
-  }
-});
 
 
 
@@ -114,6 +95,55 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+
+
+app.post('/login', function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  var salt = bcrypt.genSaltSync(10);
+  var hash = bcrypt.hashSync(password, salt);
+
+  //check database: ("users" or "Users")?
+  // var userObj = db.users.findOne({username: username, password: hash});
+
+  if(false){
+    //test once have database set up
+    req.session.regenerate(function(){
+      req.session.user = userObj.username;
+      res.redirect('/');
+    });
+  } else {
+      res.redirect('/login');
+  }
+});
+
+app.post('/signup', function(req, res){
+  var username = req.body.username;
+  var password = req.body.password;
+  var salt = bcrypt.genSaltSync(10);
+  var hash = bcrypt.hashSync(password, salt);
+
+//create new user in database and save username, salt, and hash.
+  var user = new User({
+        username: username,
+        salt: salt,
+        hash: hash
+      });
+  user.save().then(function(newuser) {
+        console.log(newuser);
+          Users.add(newuser);
+          // res.send(200);
+          // establish session with user
+          req.session.user = username;
+          console.log('req.session', req.session);
+          res.redirect('/');
+        });
+});
+
+
+
+
+
 
 
 
