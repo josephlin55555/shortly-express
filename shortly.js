@@ -43,7 +43,7 @@ app.get('/signup',
     res.render('signup');
   });
 
-app.get('/create',
+app.get('/create', util.checkUser,
 function(req, res) {
   res.render('index');
 });
@@ -100,21 +100,33 @@ function(req, res) {
 app.post('/login', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
-  var salt = bcrypt.genSaltSync(10);
-  var hash = bcrypt.hashSync(password, salt);
 
-  //check database: ("users" or "Users")?
-  // var userObj = db.users.findOne({username: username, password: hash});
 
-  if(false){
-    //test once have database set up
-    req.session.regenerate(function(){
-      req.session.user = userObj.username;
-      res.redirect('/');
-    });
-  } else {
+  new User({'username': username})
+  .fetch()
+  .then(function(user){
+    if(!user){
       res.redirect('/login');
-  }
+    } else {
+      var salt = user.attributes.salt;
+      var testHash = bcrypt.hashSync(password, salt);
+
+      if(testHash === user.attributes.hash){
+        req.session.regenerate(function(){
+          req.session.user = username;
+          res.redirect('/');
+        });
+
+      } else {
+        console.log("invalid password");
+        res.redirect('/login');
+      }
+
+    }
+
+  });
+
+
 });
 
 app.post('/signup', function(req, res){
@@ -125,19 +137,19 @@ app.post('/signup', function(req, res){
 
 //create new user in database and save username, salt, and hash.
   var user = new User({
-        username: username,
-        salt: salt,
-        hash: hash
-      });
+    username: username,
+    salt: salt,
+    hash: hash
+  });
+
   user.save().then(function(newuser) {
-        console.log(newuser);
-          Users.add(newuser);
-          // res.send(200);
+    console.log(newuser);
+    Users.add(newuser);
+
           // establish session with user
-          req.session.user = username;
-          console.log('req.session', req.session);
-          res.redirect('/');
-        });
+    req.session.user = username;
+    res.redirect('/');
+    });
 });
 
 
