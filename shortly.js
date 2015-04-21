@@ -154,6 +154,13 @@ app.post('/signup', function(req, res){
 
 
 
+app.post('/logout', function(req, res){
+  req.session.destroy();
+  res.redirect('/login');
+});
+
+
+
 
 
 
